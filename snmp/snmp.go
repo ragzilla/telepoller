@@ -1,4 +1,6 @@
 // vim: ts=4:sw=4
+// The contents of this file are Copyright (c) 2015 InfluxDB
+// Reproduced under the terms of The MIT License (MIT)
 
 package snmp
 
