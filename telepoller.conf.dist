@@ -12,60 +12,79 @@
   [[table.field]]
     name = "rttMonLatestJitterOperNumOfRTT"
     oid = ".1.3.6.1.4.1.9.9.42.1.5.2.1.1"
+    conversion = "int"
   [[table.field]]
     name = "rttMonLatestJitterOperRTTSum"
     oid = ".1.3.6.1.4.1.9.9.42.1.5.2.1.2"
+    conversion = "int"
   [[table.field]]
     name = "rttMonLatestJitterOperRTTMin"
     oid = ".1.3.6.1.4.1.9.9.42.1.5.2.1.4"
+    conversion = "int"
   [[table.field]]
     name = "rttMonLatestJitterOperRTTMax"
     oid = ".1.3.6.1.4.1.9.9.42.1.5.2.1.5"
+    conversion = "int"
   [[table.field]]
     name = "rttMonLatestJitterOperPacketLossSD"
     oid = ".1.3.6.1.4.1.9.9.42.1.5.2.1.26"
+    conversion = "int"
   [[table.field]]
     name = "rttMonLatestJitterOperPacketLossDS"
     oid = ".1.3.6.1.4.1.9.9.42.1.5.2.1.27"
+    conversion = "int"
   [[table.field]]
     name = "rttMonLatestJitterOperPacketOutOfSequence"
     oid = ".1.3.6.1.4.1.9.9.42.1.5.2.1.28"
+    conversion = "int"
   [[table.field]]
     name = "rttMonLatestJitterOperPacketMIA"
     oid = ".1.3.6.1.4.1.9.9.42.1.5.2.1.29"
+    conversion = "int"
   [[table.field]]
     name = "rttMonLatestJitterOperPacketLateArrival"
     oid = ".1.3.6.1.4.1.9.9.42.1.5.2.1.30"
+    conversion = "int"
   [[table.field]]
     name = "rttMonLatestJitterOperOWMinSD"
     oid = ".1.3.6.1.4.1.9.9.42.1.5.2.1.35"
+    conversion = "int"
   [[table.field]]
     name = "rttMonLatestJitterOperOWMaxSD"
     oid = ".1.3.6.1.4.1.9.9.42.1.5.2.1.36"
+    conversion = "int"
   [[table.field]]
     name = "rttMonLatestJitterOperOWMinDS"
     oid = ".1.3.6.1.4.1.9.9.42.1.5.2.1.39"
+    conversion = "int"
   [[table.field]]
     name = "rttMonLatestJitterOperOWMaxDS"
     oid = ".1.3.6.1.4.1.9.9.42.1.5.2.1.40"
+    conversion = "int"
   [[table.field]]
     name = "rttMonLatestJitterOperMOS"
     oid = ".1.3.6.1.4.1.9.9.42.1.5.2.1.42"
+    conversion = "int"
   [[table.field]]
     name = "rttMonLatestJitterOperAvgJitter"
     oid = ".1.3.6.1.4.1.9.9.42.1.5.2.1.46"
+    conversion = "int"
   [[table.field]]
     name = "rttMonLatestJitterOperAvgSDJ"
     oid = ".1.3.6.1.4.1.9.9.42.1.5.2.1.47"
+    conversion = "int"
   [[table.field]]
     name = "rttMonLatestJitterOperAvgDSJ"
     oid = ".1.3.6.1.4.1.9.9.42.1.5.2.1.48"
+    conversion = "int"
   [[table.field]]
     name = "rttMonLatestJitterOperOWAvgSD"
     oid = ".1.3.6.1.4.1.9.9.42.1.5.2.1.49"
+    conversion = "int"
   [[table.field]]
     name = "rttMonLatestJitterOperOWAvgDS"
     oid = ".1.3.6.1.4.1.9.9.42.1.5.2.1.50"
+    conversion = "int"
 
 [[table]]
   name = "ifMIB"
@@ -77,64 +96,84 @@
     name = "ifType"
     oid = ".1.3.6.1.2.1.2.2.1.3"
     is_tag = true
+    conversion = "int"
   [[table.field]]
     name = "ifInOctets"
     oid = ".1.3.6.1.2.1.2.2.1.10"
+    conversion = "int"
   [[table.field]]
     name = "ifInUcastPkts"
     oid = ".1.3.6.1.2.1.2.2.1.11"
+    conversion = "int"
   [[table.field]]
     name = "ifInDiscards"
     oid = ".1.3.6.1.2.1.2.2.1.13"
+    conversion = "int"
   [[table.field]]
     name = "ifInErrors"
     oid = ".1.3.6.1.2.1.2.2.1.14"
+    conversion = "int"
   [[table.field]]
     name = "ifOutOctets"
     oid = ".1.3.6.1.2.1.2.2.1.16"
+    conversion = "int"
   [[table.field]]
     name = "ifOutUcastPkts"
     oid = ".1.3.6.1.2.1.2.2.1.17"
+    conversion = "int"
   [[table.field]]
     name = "ifOutDiscards"
     oid = ".1.3.6.1.2.1.2.2.1.19"
+    conversion = "int"
   [[table.field]]
     name = "ifOutErrors"
     oid = ".1.3.6.1.2.1.2.2.1.20"
+    conversion = "int"
   [[table.field]]
     name = "ifInMulticastPkts"
     oid = ".1.3.6.1.2.1.31.1.1.1.2"
+    conversion = "int"
   [[table.field]]
     name = "ifInBroadcastPkts"
     oid = ".1.3.6.1.2.1.31.1.1.1.3"
+    conversion = "int"
   [[table.field]]
     name = "ifOutMulticastPkts"
     oid = ".1.3.6.1.2.1.31.1.1.1.4"
+    conversion = "int"
   [[table.field]]
     name = "ifOutBroadcastPkts"
     oid = ".1.3.6.1.2.1.31.1.1.1.5"
+    conversion = "int"
   [[table.field]]
     name = "ifHCInOctets"
     oid = ".1.3.6.1.2.1.31.1.1.1.6"
+    conversion = "int"
   [[table.field]]
     name = "ifHCInUcastPkts"
     oid = ".1.3.6.1.2.1.31.1.1.1.7"
+    conversion = "int"
   [[table.field]]
     name = "ifHCInMulticastPkts"
     oid = ".1.3.6.1.2.1.31.1.1.1.8"
+    conversion = "int"
   [[table.field]]
     name = "ifHCInBroadcastPkts"
     oid = ".1.3.6.1.2.1.31.1.1.1.9"
+    conversion = "int"
   [[table.field]]
     name = "ifHCOutOctets"
     oid = ".1.3.6.1.2.1.31.1.1.1.10"
+    conversion = "int"
   [[table.field]]
     name = "ifHCOutUcastPkts"
     oid = ".1.3.6.1.2.1.31.1.1.1.11"
+    conversion = "int"
   [[table.field]]
     name = "ifHCOutMulticastPkts"
     oid = ".1.3.6.1.2.1.31.1.1.1.12"
+    conversion = "int"
   [[table.field]]
     name = "ifHCOutBroadcastPkts"
     oid = ".1.3.6.1.2.1.31.1.1.1.13"
-
+    conversion = "int"
