@@ -66,3 +66,75 @@
   [[table.field]]
     name = "rttMonLatestJitterOperOWAvgDS"
     oid = ".1.3.6.1.4.1.9.9.42.1.5.2.1.50"
+
+[[table]]
+  name = "ifMIB"
+  [[table.field]]
+    name = "ifName"
+    oid = ".1.3.6.1.2.1.31.1.1.1.1"
+    is_tag = true
+  [[table.field]]
+    name = "ifType"
+    oid = ".1.3.6.1.2.1.2.2.1.3"
+    is_tag = true
+  [[table.field]]
+    name = "ifInOctets"
+    oid = ".1.3.6.1.2.1.2.2.1.10"
+  [[table.field]]
+    name = "ifInUcastPkts"
+    oid = ".1.3.6.1.2.1.2.2.1.11"
+  [[table.field]]
+    name = "ifInDiscards"
+    oid = ".1.3.6.1.2.1.2.2.1.13"
+  [[table.field]]
+    name = "ifInErrors"
+    oid = ".1.3.6.1.2.1.2.2.1.14"
+  [[table.field]]
+    name = "ifOutOctets"
+    oid = ".1.3.6.1.2.1.2.2.1.16"
+  [[table.field]]
+    name = "ifOutUcastPkts"
+    oid = ".1.3.6.1.2.1.2.2.1.17"
+  [[table.field]]
+    name = "ifOutDiscards"
+    oid = ".1.3.6.1.2.1.2.2.1.19"
+  [[table.field]]
+    name = "ifOutErrors"
+    oid = ".1.3.6.1.2.1.2.2.1.20"
+  [[table.field]]
+    name = "ifInMulticastPkts"
+    oid = ".1.3.6.1.2.1.31.1.1.1.2"
+  [[table.field]]
+    name = "ifInBroadcastPkts"
+    oid = ".1.3.6.1.2.1.31.1.1.1.3"
+  [[table.field]]
+    name = "ifOutMulticastPkts"
+    oid = ".1.3.6.1.2.1.31.1.1.1.4"
+  [[table.field]]
+    name = "ifOutBroadcastPkts"
+    oid = ".1.3.6.1.2.1.31.1.1.1.5"
+  [[table.field]]
+    name = "ifHCInOctets"
+    oid = ".1.3.6.1.2.1.31.1.1.1.6"
+  [[table.field]]
+    name = "ifHCInUcastPkts"
+    oid = ".1.3.6.1.2.1.31.1.1.1.7"
+  [[table.field]]
+    name = "ifHCInMulticastPkts"
+    oid = ".1.3.6.1.2.1.31.1.1.1.8"
+  [[table.field]]
+    name = "ifHCInBroadcastPkts"
+    oid = ".1.3.6.1.2.1.31.1.1.1.9"
+  [[table.field]]
+    name = "ifHCOutOctets"
+    oid = ".1.3.6.1.2.1.31.1.1.1.10"
+  [[table.field]]
+    name = "ifHCOutUcastPkts"
+    oid = ".1.3.6.1.2.1.31.1.1.1.11"
+  [[table.field]]
+    name = "ifHCOutMulticastPkts"
+    oid = ".1.3.6.1.2.1.31.1.1.1.12"
+  [[table.field]]
+    name = "ifHCOutBroadcastPkts"
+    oid = ".1.3.6.1.2.1.31.1.1.1.13"
+

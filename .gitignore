@@ -16,3 +16,4 @@
 # local excludes
 telepoller
 telepoller.conf
+.*.swp
