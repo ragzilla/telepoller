@@ -10,49 +10,41 @@ import (
 
 // Snmp holds the configuration for the agent
 type Snmp struct {
+	Agents []string
 	// Timeout to wait for a response.
 	Timeout time.Duration
 	Retries int
 	// Values: 1, 2
 	Version uint8
-
 	// Parameters for Version 1 & 2
 	Community string
-
 	// Parameters for Version 2
 	MaxRepetitions uint8
-
-	Tables []Table `toml:"table"`
-
+	Tables         []Table `toml:"table"`
 	// Name & Fields are the elements of a Table.
 	// Telegraf chokes if we try to embed a Table. So instead we have to embed the
 	// fields of a Table, and construct a Table during runtime.
-	Name   string
-	Fields []Field `toml:"field"`
+	Name string
+}
 
-	initialized bool
+func NewSnmp() *Snmp {
+	s := Snmp{
+		Name:           "snmp",
+		Retries:        3,
+		Timeout:        5 * time.Second,
+		MaxRepetitions: 10,
+		Version:        2,
+		Community:      "public",
+	}
+	return &s
 }
 
 // Table holds the configuration for a SNMP table.
 type Table struct {
 	// Name will be the name of the measurement.
 	Name string
-
-	// Which tags to inherit from the top-level config.
-	InheritTags []string
-
-	// Adds each row's table index as a tag.
-	IndexAsTag bool
-
 	// Fields is the tags and values to look up.
 	Fields []Field `toml:"field"`
-
-	// OID for automatic field population.
-	// If provided, init() will populate Fields with all the table columns of the
-	// given OID.
-	Oid string
-
-	initialized bool
 }
 
 // Field holds the configuration for a Field to look up.
@@ -75,6 +67,4 @@ type Field struct {
 	//  "hwaddr" will convert a 6-byte string to a MAC address.
 	//  "ipaddr" will convert the value to an IPv4 or IPv6 address.
 	Conversion string
-
-	initialized bool
 }

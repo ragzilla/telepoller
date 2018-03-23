@@ -8,7 +8,6 @@ import (
 	tsnmp "github.com/ragzilla/telepoller/snmp"
 	"io/ioutil"
 	"os"
-	"time"
 )
 
 func main() {
@@ -21,14 +20,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	snmp := tsnmp.Snmp{
-		Name:           "snmp",
-		Retries:        3,
-		Timeout:        5 * time.Second,
-		MaxRepetitions: 10,
-		Version:        2,
-		Community:      "public",
-	}
+	snmp := tsnmp.NewSnmp()
 	if err := toml.Unmarshal(buf, &snmp); err != nil {
 		panic(err)
 	}
