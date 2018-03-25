@@ -24,10 +24,8 @@ import (
 // Snmp holds the configuration for the agent
 type Snmp struct {
 	framework      *telepoller.TpFramework
-	Agents         []string
 	Timeout        time.Duration
 	Retries        int
-	Community      string
 	MaxRepetitions uint8
 	Tables         []Table `toml:"table"`
 }
@@ -37,7 +35,6 @@ func NewSnmp() *Snmp {
 		Retries:        3,
 		Timeout:        5 * time.Second,
 		MaxRepetitions: 10,
-		Community:      "public",
 	}
 	return &s
 }
