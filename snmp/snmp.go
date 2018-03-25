@@ -185,68 +185,37 @@ func (t Table) Build(agent string, community string) (*RTable, error) {
 }
 
 type Filter struct {
-	// the name of the field to filter on
+	// the name of the tag to filter on
 	Name string
-	// integers to include/exclude
-	IncludeInt []int
-	ExcludeInt []int
-	// strings to include/exclude
-	IncludeString []string
-	ExcludeString []string
 
-	IntFilter    map[int]bool
-	StringFilter map[string]bool
+	// tag values to include/exclude
+	Include []string
+	Exclude []string
 
-	IntDefault    bool
-	StringDefault bool
+	// map, and default value
+	Filter  map[string]bool
+	Default bool
 }
 
 func (f Filter) Init(t Table) error {
 	field := t.GetField(f.Name)
 	if field != nil {
-		if field.Conversion == "int" {
-			// integer type field, check and make sure they supplied an appropriate filter
-			if f.IncludeString != nil || f.ExcludeString != nil {
-				return fmt.Errorf("Wrong conversion \"string\", field %s for table %s", f.Name, t.Name)
-			} else if f.IncludeInt != nil && f.ExcludeInt != nil {
-				return fmt.Errorf("Can't include AND exclude \"int\", field %s for table %s", f.Name, t.Name)
+		// string type field, check and make sure they supplied an appropriate filter
+		if f.Include != nil && f.Exclude != nil {
+			return fmt.Errorf("Can't include AND exclude field %s for table %s", f.Name, t.Name)
+		}
+		// map retrieves false when value not present
+		f.Filter = make(map[string]bool)
+		if f.Include != nil {
+			f.Default = false
+			for _, k := range f.Include {
+				f.Filter[k] = true
 			}
-			// map retrieves false when value not present
-			f.IntFilter = make(map[int]bool)
-			if f.IncludeInt != nil {
-				f.IntDefault = false
-				for _, k := range f.IncludeInt {
-					f.IntFilter[k] = true
-				}
-			} else if f.ExcludeInt != nil {
-				f.IntDefault = true
-				for _, k := range f.ExcludeInt {
-					f.IntFilter[k] = true
-				}
+		} else if f.Exclude != nil {
+			f.Default = true
+			for _, k := range f.Exclude {
+				f.Filter[k] = true
 			}
-		} else if field.Conversion == "" {
-			// string type field, check and make sure they supplied an appropriate filter
-			if f.IncludeInt != nil || f.ExcludeInt != nil {
-				return fmt.Errorf("Wrong conversion \"int\", field %s for table %s", f.Name, t.Name)
-			} else if f.IncludeString != nil && f.ExcludeString != nil {
-				return fmt.Errorf("Can't include AND exclude \"string\", field %s for table %s", f.Name, t.Name)
-			}
-			// map retrieves false when value not present
-			f.StringFilter = make(map[string]bool)
-			if f.IncludeString != nil {
-				f.StringDefault = false
-				for _, k := range f.IncludeString {
-					f.StringFilter[k] = true
-				}
-			} else if f.ExcludeString != nil {
-				f.StringDefault = true
-				for _, k := range f.ExcludeString {
-					f.StringFilter[k] = true
-				}
-			}
-		} else {
-			// what the crap is going on
-			return fmt.Errorf("Unable to find right conversion, field %s for table %s", f.Name, t.Name)
 		}
 		return nil
 	}
@@ -254,17 +223,9 @@ func (f Filter) Init(t Table) error {
 }
 
 func (f Filter) Check(r *RTableRow) bool {
-	// xDefault = true when we're excluding
-	// xFilter  = true when we're inverting that response
-	if f.IntFilter != nil {
-		// int filter
-		return f.IntFilter[r.Tags[f.Name]] ^ f.IntDefault
-	} else if f.StringFilter != nil {
-		// string filter
-		return f.StringFilter[r.Tags[f.Name]] ^ f.StringDefault
-	}
-	// default to allow the row
-	return true
+	// Default = true when we're excluding
+	// Filter  = true when we're inverting that response
+	return f.Filter[r.Tags[f.Name]] != f.Default
 }
 
 // Field holds the configuration for a Field to look up.
