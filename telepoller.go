@@ -13,6 +13,8 @@ import (
 	tsnmp "github.com/ragzilla/telepoller/snmp"
 )
 
+// "github.com/davecgh/go-spew/spew"
+
 func main() {
 	f, err := os.Open("telepoller.conf")
 	if err != nil {
