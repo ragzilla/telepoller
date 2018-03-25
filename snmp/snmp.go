@@ -217,43 +217,6 @@ func (f *Filter) Init(t *Table) error {
 	return nil
 }
 
-/*
-func (f *Filter) Init(t Table) error {
-	field := t.GetField(f.Name)
-	if field != nil {
-		// string type field, check and make sure they supplied an appropriate filter
-		if f.Include != nil && f.Exclude != nil {
-			return fmt.Errorf("Can't include AND exclude field %s for table %s", f.Name, t.Name)
-		}
-		// map retrieves false when value not present
-		f.Filter = make(map[string]bool)
-		if f.Include != nil {
-			f.Default = false
-			for _, k := range f.Include {
-				f.Filter[k] = true
-			}
-		} else if f.Exclude != nil {
-			f.Default = true
-			for _, k := range f.Exclude {
-				f.Filter[k] = true
-			}
-		}
-		return nil
-	}
-	return fmt.Errorf("Bad field %s for table %s", f.Name, t.Name)
-}
-
-func (f *Filter) Check(r *RTableRow) bool {
-	// Default = true when we're excluding
-	// Filter  = true when we're inverting that response
-	spew.Dump(r)
-	spew.Dump(f)
-	fmt.Printf("checking filter %v for value %v (%v/%v)\n", f.Filter, r.Tags[f.Name], f.Filter[r.Tags[f.Name]], f.Default)
-	panic("welp")
-	return f.Filter[r.Tags[f.Name]] != f.Default
-}
-*/
-
 // Field holds the configuration for a Field to look up.
 type Field struct {
 	// Name will be the name of the field.
