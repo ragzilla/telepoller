@@ -16,15 +16,15 @@ import (
 	"time"
 
 	radix "github.com/armon/go-radix"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/influxdata/toml"
+	"github.com/ragzilla/telepoller"
 	"github.com/soniah/gosnmp"
 )
 
 // Snmp holds the configuration for the agent
 type Snmp struct {
-	Agents []string
-	// Timeout to wait for a response.
+	framework      *telepoller.TpFramework
+	Agents         []string
 	Timeout        time.Duration
 	Retries        int
 	Community      string
@@ -42,7 +42,9 @@ func NewSnmp() *Snmp {
 	return &s
 }
 
-func (s *Snmp) Init(config string) error {
+func (s *Snmp) Init(framework *telepoller.TpFramework, config string) error {
+	s.framework = framework
+
 	// load configuration
 	f, err := os.Open(config)
 	if err != nil {
@@ -63,9 +65,15 @@ func (s *Snmp) Init(config string) error {
 			return err
 		}
 	}
-	fmt.Println("initialized snmp!")
-	spew.Dump(s)
+	// fmt.Println("initialized snmp!")
+	// spew.Dump(s)
 	return nil
+}
+
+func (s *Snmp) NewJob(j *telepoller.TpJob, cb func()) {
+	fmt.Println("Snmp.NewJob() new job:", j)
+	s.framework.Publish(nil)
+	cb()
 }
 
 func (s *Snmp) GetTable(table string) *Table {

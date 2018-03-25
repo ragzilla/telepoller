@@ -3,6 +3,7 @@
 package main
 
 import (
+	// "github.com/davecgh/go-spew/spew"
 	"github.com/ragzilla/telepoller"
 	"github.com/ragzilla/telepoller/telepoller_snmp/snmp"
 )
@@ -24,25 +25,16 @@ import (
 func main() {
 	s := snmp.NewSnmp()
 	f := telepoller.NewFramework()
-	f.Init(s)
+	if err := f.Init(s); err != nil {
+		panic(err)
+	}
+	// spew.Dump(f)
+	if err := f.Run(); err != nil {
+		panic(err)
+	}
+	f.Done()
+	return
 	/*
-		f, err := os.Open("telepoller_snmp.conf")
-		if err != nil {
-			panic(err)
-		}
-		defer f.Close()
-		buf, err := ioutil.ReadAll(f)
-		if err != nil {
-			panic(err)
-		}
-		snmp := tsnmp.NewSnmp()
-		if err := toml.Unmarshal(buf, &snmp); err != nil {
-			panic(err)
-		}
-		if err := snmp.Init(); err != nil {
-			panic(err)
-		}
-
 		wg := &sync.WaitGroup{}
 
 		for _, a := range snmp.Agents {
