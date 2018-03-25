@@ -78,7 +78,24 @@ func (s *Snmp) NewJob(j *telepoller.TpJob, cb func()) {
 		cb()
 		return
 	}
-	s.framework.Publish(nil)
+	table := s.GetTable(j.Params["table"])
+	if table == nil {
+		fmt.Printf("Bad table \"%v\" in request %v\n", j.Params["table"], j)
+		cb()
+		return
+	}
+	community := j.Params["community"]
+	if community == "" {
+		fmt.Printf("No community in request %v\n", j)
+		cb()
+		return
+	}
+	for k, v := range j.Hosts {
+		if k == "" || v == "" {
+			continue
+		}
+		s.framework.Publish(nil)
+	}
 	cb()
 	return
 }
