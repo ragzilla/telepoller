@@ -16,6 +16,7 @@ import (
 	"time"
 
 	radix "github.com/armon/go-radix"
+	client "github.com/influxdata/influxdb/client/v2"
 	"github.com/influxdata/toml"
 	"github.com/ragzilla/telepoller"
 	"github.com/soniah/gosnmp"
@@ -62,13 +63,10 @@ func (s *Snmp) Init(framework *telepoller.TpFramework, config string) error {
 			return err
 		}
 	}
-	// fmt.Println("initialized snmp!")
-	// spew.Dump(s)
 	return nil
 }
 
 func (s *Snmp) NewJob(j *telepoller.TpJob, cb func()) {
-	// fmt.Println("Snmp.NewJob() new job:", j)
 	// check we have table and community params
 	if _, ok := j.Params["community"]; !ok {
 		cb()
@@ -84,23 +82,45 @@ func (s *Snmp) NewJob(j *telepoller.TpJob, cb func()) {
 		cb()
 		return
 	}
-	community := j.Params["community"]
-	if community == "" {
+	if j.Params["community"] == "" {
 		fmt.Printf("No community in request %v\n", j)
 		cb()
 		return
 	}
+	wg := &sync.WaitGroup{}
 	for k, v := range j.Hosts {
 		if k == "" || v == "" {
 			continue
 		}
-		s.framework.Publish(nil)
+		wg.Add(1)
+		go func(t *Table, hostname string, a string, c string) {
+			defer wg.Done()
+			rt, err := t.Build(a, c)
+			if err != nil {
+				panic("foo")
+			}
+			for _, rtr := range rt.Rows {
+				if len(rtr.Fields) == 0 {
+					continue
+				}
+				rtr.Tags["agent_host"] = a
+				rtr.Tags["hostname"] = hostname
+				pt, err := client.NewPoint("ifMIB", rtr.Tags, rtr.Fields, rt.Time)
+				if err != nil {
+					fmt.Printf("Error creating point: %v\n", err)
+					continue
+				}
+				s.framework.Publish(pt)
+			}
+		}(table, k, v, j.Params["community"])
 	}
+	wg.Wait()
 	cb()
 	return
 }
 
 func (s *Snmp) GetTable(table string) *Table {
+	// this isn't very efficient, we should implement a map/radix
 	for idx, _ := range s.Tables {
 		if table == s.Tables[idx].Name {
 			return &s.Tables[idx]

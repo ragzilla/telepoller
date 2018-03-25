@@ -109,7 +109,7 @@ func (f *TpFramework) Run() error {
 
 func (f *TpFramework) Publish(pt *client.Point) error {
 	f.outbuffer.Reset()
-	f.outbuffer.WriteString("foobar")
+	f.outbuffer.WriteString(pt.String())
 	return f.nc.Publish(f.outqueue, f.outbuffer.Bytes())
 }
 
