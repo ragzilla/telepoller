@@ -68,9 +68,19 @@ func (s *Snmp) Init(framework *telepoller.TpFramework, config string) error {
 }
 
 func (s *Snmp) NewJob(j *telepoller.TpJob, cb func()) {
-	fmt.Println("Snmp.NewJob() new job:", j)
+	// fmt.Println("Snmp.NewJob() new job:", j)
+	// check we have table and community params
+	if _, ok := j.Params["community"]; !ok {
+		cb()
+		return
+	}
+	if _, ok := j.Params["table"]; !ok {
+		cb()
+		return
+	}
 	s.framework.Publish(nil)
 	cb()
+	return
 }
 
 func (s *Snmp) GetTable(table string) *Table {
