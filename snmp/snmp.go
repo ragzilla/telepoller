@@ -5,38 +5,45 @@
 package snmp
 
 import (
+	"fmt"
+	"math"
+	"net"
+	"strconv"
+	"strings"
+	"sync"
 	"time"
+
+	"github.com/soniah/gosnmp"
 )
 
 // Snmp holds the configuration for the agent
 type Snmp struct {
 	Agents []string
 	// Timeout to wait for a response.
-	Timeout time.Duration
-	Retries int
-	// Values: 1, 2
-	Version uint8
-	// Parameters for Version 1 & 2
-	Community string
-	// Parameters for Version 2
+	Timeout        time.Duration
+	Retries        int
+	Community      string
 	MaxRepetitions uint8
 	Tables         []Table `toml:"table"`
-	// Name & Fields are the elements of a Table.
-	// Telegraf chokes if we try to embed a Table. So instead we have to embed the
-	// fields of a Table, and construct a Table during runtime.
-	Name string
 }
 
 func NewSnmp() *Snmp {
 	s := Snmp{
-		Name:           "snmp",
 		Retries:        3,
 		Timeout:        5 * time.Second,
 		MaxRepetitions: 10,
-		Version:        2,
 		Community:      "public",
 	}
 	return &s
+}
+
+func (s *Snmp) GetTable(table string) *Table {
+	for _, t := range s.Tables {
+		if table == t.Name {
+			return &t
+		}
+	}
+	panic(fmt.Sprintf("table %s not found", table))
 }
 
 // Table holds the configuration for a SNMP table.
@@ -45,6 +52,112 @@ type Table struct {
 	Name string
 	// Fields is the tags and values to look up.
 	Fields []Field `toml:"field"`
+}
+
+// Build retrieves fields specified in a table and returns an RTable
+func (t Table) Build(agent string, community string) (*RTable, error) {
+	rows := map[string]RTableRow{}
+	rl := &sync.Mutex{}
+	wg := &sync.WaitGroup{}
+
+	for _, f := range t.Fields {
+		wg.Add(1)
+		go func(f Field, agent string, community string) error {
+			defer wg.Done()
+			if len(f.Oid) == 0 {
+				panic(fmt.Sprintf("cannot have empty OID on field %s", f.Name))
+			}
+			var oid string
+			if f.Oid[0] == '.' {
+				oid = f.Oid
+			} else {
+				// make sure OID has "." because the BulkWalkAll results do, and the prefix needs to match
+				oid = "." + f.Oid
+			}
+
+			// ifv contains a mapping of table OID index to field value
+			ifv := map[string]interface{}{}
+
+			gs := gosnmpWrapper{&gosnmp.GoSNMP{}}
+			gs.Target = agent
+			gs.Port = 161
+			gs.Version = gosnmp.Version2c
+			gs.Community = community
+			gs.MaxRepetitions = 10
+			gs.Retries = 3
+			gs.Timeout = 5 * time.Second
+			if err := gs.Connect(); err != nil {
+				return Errorf(err, "setting up connection")
+			}
+
+			err := gs.Walk(oid, func(ent gosnmp.SnmpPDU) error {
+				if len(ent.Name) <= len(oid) || ent.Name[:len(oid)+1] != oid+"." {
+					return NestedError{} // break the walk
+				}
+
+				idx := ent.Name[len(oid):]
+				if f.OidIndexSuffix != "" {
+					if !strings.HasSuffix(idx, f.OidIndexSuffix) {
+						// this entry doesn't match our OidIndexSuffix. skip it
+						return nil
+					}
+					idx = idx[:len(idx)-len(f.OidIndexSuffix)]
+				}
+
+				fv, err := fieldConvert(f.Conversion, ent.Value)
+				if err != nil {
+					return Errorf(err, "converting %q (OID %s) for field %s", ent.Value, ent.Name, f.Name)
+				}
+				ifv[idx] = fv
+				return nil
+			})
+
+			if err != nil {
+				if _, ok := err.(NestedError); !ok {
+					/*
+						return nil, Errorf(err, "performing bulk walk for field %s", f.Name)
+					*/
+					return Errorf(err, "performing bulk walk for field %s", f.Name)
+				}
+			}
+
+			for idx, v := range ifv {
+				rl.Lock()
+				rtr, ok := rows[idx]
+				if !ok {
+					rtr = RTableRow{}
+					rtr.Tags = map[string]string{}
+					rtr.Fields = map[string]interface{}{}
+					rows[idx] = rtr
+				}
+				rl.Unlock()
+				// don't add an empty string
+				if vs, ok := v.(string); !ok || vs != "" {
+					if f.IsTag {
+						if ok {
+							rtr.Tags[f.Name] = vs
+						} else {
+							rtr.Tags[f.Name] = fmt.Sprintf("%v", v)
+						}
+					} else {
+						rtr.Fields[f.Name] = v
+					}
+				}
+			}
+			return nil
+		}(f, agent, community)
+	}
+	wg.Wait()
+
+	rt := RTable{
+		Name: t.Name,
+		Time: time.Now(), //TODO record time at start
+		Rows: make([]RTableRow, 0, len(rows)),
+	}
+	for _, r := range rows {
+		rt.Rows = append(rt.Rows, r)
+	}
+	return &rt, nil
 }
 
 // Field holds the configuration for a Field to look up.
@@ -67,4 +180,195 @@ type Field struct {
 	//  "hwaddr" will convert a 6-byte string to a MAC address.
 	//  "ipaddr" will convert the value to an IPv4 or IPv6 address.
 	Conversion string
+}
+
+// RTable is the resulting table built from a Table.
+type RTable struct {
+	// Name is the name of the field, copied from Table.Name.
+	Name string
+	// Time is the time the table was built.
+	Time time.Time
+	// Rows are the rows that were found, one row for each table OID index found.
+	Rows []RTableRow
+}
+
+// RTableRow is the resulting row containing all the OID values which shared
+// the same index.
+type RTableRow struct {
+	// Tags are all the Field values which had IsTag=true.
+	Tags map[string]string
+	// Fields are all the Field values which had IsTag=false.
+	Fields map[string]interface{}
+}
+
+// NestedError wraps an error returned from deeper in the code.
+type NestedError struct {
+	// Err is the error from where the NestedError was constructed.
+	Err error
+	// NestedError is the error that was passed back from the called function.
+	NestedErr error
+}
+
+// Error returns a concatenated string of all the nested errors.
+func (ne NestedError) Error() string {
+	return ne.Err.Error() + ": " + ne.NestedErr.Error()
+}
+
+// Errorf is a convenience function for constructing a NestedError.
+func Errorf(err error, msg string, format ...interface{}) error {
+	return NestedError{
+		NestedErr: err,
+		Err:       fmt.Errorf(msg, format...),
+	}
+}
+
+// gosnmpWrapper wraps a *gosnmp.GoSNMP object so we can use it as a snmpConnection.
+type gosnmpWrapper struct {
+	*gosnmp.GoSNMP
+}
+
+// Host returns the value of GoSNMP.Target.
+func (gsw gosnmpWrapper) Host() string {
+	return gsw.Target
+}
+
+// Walk GoSNMP.BulkWalk()
+// Also, if any error is encountered, it will just once reconnect and try again.
+func (gsw gosnmpWrapper) Walk(oid string, fn gosnmp.WalkFunc) error {
+	var err error
+	// On error, retry once.
+	// Unfortunately we can't distinguish between an error returned by gosnmp, and one returned by the walk function.
+	for i := 0; i < 2; i++ {
+		err = gsw.GoSNMP.BulkWalk(oid, fn)
+		if err == nil {
+			return nil
+		}
+		if err := gsw.GoSNMP.Connect(); err != nil {
+			return Errorf(err, "reconnecting")
+		}
+	}
+	return err
+}
+
+// fieldConvert converts from any type according to the conv specification
+//  "float"/"float(0)" will convert the value into a float.
+//  "float(X)" will convert the value into a float, and then move the decimal before Xth right-most digit.
+//  "int" will convert the value into an integer.
+//  "hwaddr" will convert the value into a MAC address.
+//  "ipaddr" will convert the value into into an IP address.
+//  "" will convert a byte slice into a string.
+func fieldConvert(conv string, v interface{}) (interface{}, error) {
+	if conv == "" {
+		if bs, ok := v.([]byte); ok {
+			return string(bs), nil
+		}
+		return v, nil
+	}
+
+	var d int
+	if _, err := fmt.Sscanf(conv, "float(%d)", &d); err == nil || conv == "float" {
+		switch vt := v.(type) {
+		case float32:
+			v = float64(vt) / math.Pow10(d)
+		case float64:
+			v = float64(vt) / math.Pow10(d)
+		case int:
+			v = float64(vt) / math.Pow10(d)
+		case int8:
+			v = float64(vt) / math.Pow10(d)
+		case int16:
+			v = float64(vt) / math.Pow10(d)
+		case int32:
+			v = float64(vt) / math.Pow10(d)
+		case int64:
+			v = float64(vt) / math.Pow10(d)
+		case uint:
+			v = float64(vt) / math.Pow10(d)
+		case uint8:
+			v = float64(vt) / math.Pow10(d)
+		case uint16:
+			v = float64(vt) / math.Pow10(d)
+		case uint32:
+			v = float64(vt) / math.Pow10(d)
+		case uint64:
+			v = float64(vt) / math.Pow10(d)
+		case []byte:
+			vf, _ := strconv.ParseFloat(string(vt), 64)
+			v = vf / math.Pow10(d)
+		case string:
+			vf, _ := strconv.ParseFloat(vt, 64)
+			v = vf / math.Pow10(d)
+		}
+		return v, nil
+	}
+
+	if conv == "int" {
+		switch vt := v.(type) {
+		case float32:
+			v = int64(vt)
+		case float64:
+			v = int64(vt)
+		case int:
+			v = int64(vt)
+		case int8:
+			v = int64(vt)
+		case int16:
+			v = int64(vt)
+		case int32:
+			v = int64(vt)
+		case int64:
+			v = int64(vt)
+		case uint:
+			v = uint64(vt)
+		case uint8:
+			v = uint64(vt)
+		case uint16:
+			v = uint64(vt)
+		case uint32:
+			v = uint64(vt)
+		case uint64:
+			v = uint64(vt)
+		case []byte:
+			v, _ = strconv.Atoi(string(vt))
+		case string:
+			v, _ = strconv.Atoi(vt)
+		}
+		return v, nil
+	}
+
+	if conv == "hwaddr" {
+		switch vt := v.(type) {
+		case string:
+			v = net.HardwareAddr(vt).String()
+		case []byte:
+			v = net.HardwareAddr(vt).String()
+		default:
+			return nil, fmt.Errorf("invalid type (%T) for hwaddr conversion", v)
+		}
+		return v, nil
+	}
+
+	if conv == "ipaddr" {
+		var ipbs []byte
+
+		switch vt := v.(type) {
+		case string:
+			ipbs = []byte(vt)
+		case []byte:
+			ipbs = vt
+		default:
+			return nil, fmt.Errorf("invalid type (%T) for ipaddr conversion", v)
+		}
+
+		switch len(ipbs) {
+		case 4, 16:
+			v = net.IP(ipbs).String()
+		default:
+			return nil, fmt.Errorf("invalid length (%d) for ipaddr conversion", len(ipbs))
+		}
+
+		return v, nil
+	}
+
+	return nil, fmt.Errorf("invalid conversion type '%s'", conv)
 }
