@@ -2,7 +2,7 @@
 snmp bulk polling, using influxdata/telegraf as a baseline
 
 * git clone 
-* build telepoller_X binary by cd'ing to folder
+* build telepoller_X binary by cd'ing to folder and running 'go build'
 * copy telepoller_X.conf.dist to telepoller_X.conf
 * customize as necessary
 * configure telegraf to listen to telepoller_X.response topics
