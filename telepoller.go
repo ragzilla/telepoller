@@ -8,12 +8,11 @@ import (
 	"os"
 	"sync"
 
+	// "github.com/davecgh/go-spew/spew"
 	client "github.com/influxdata/influxdb/client/v2"
 	"github.com/influxdata/toml"
 	tsnmp "github.com/ragzilla/telepoller/snmp"
 )
-
-// "github.com/davecgh/go-spew/spew"
 
 func main() {
 	f, err := os.Open("telepoller.conf")
