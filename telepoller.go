@@ -50,7 +50,7 @@ func (f *TpFramework) Init(p tpPoller) error {
 	// load configuration
 	config := path.Base(os.Args[0])
 	f.inqueue = config + ".request"
-	f.outqueue = config + ".response"
+	f.outqueue = config + ".result"
 	config += ".conf"
 
 	// initialize poller

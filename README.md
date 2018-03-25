@@ -5,7 +5,7 @@ snmp bulk polling, using influxdata/telegraf as a baseline
 * build telepoller_X binary by cd'ing to folder and running 'go build'
 * copy telepoller_X.conf.dist to telepoller_X.conf
 * customize as necessary
-* configure telegraf to listen to telepoller_X.response topics
+* configure telegraf to listen to telepoller_X.result topics
 * run daemon
 * send it job requests over nats topic telepoller_X.request somehow, scripting example:
   ```bash
