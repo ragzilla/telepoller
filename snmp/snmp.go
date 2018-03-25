@@ -49,9 +49,9 @@ func (s *Snmp) Init() error {
 }
 
 func (s *Snmp) GetTable(table string) *Table {
-	for _, t := range s.Tables {
-		if table == t.Name {
-			return &t
+	for idx, _ := range s.Tables {
+		if table == s.Tables[idx].Name {
+			return &s.Tables[idx]
 		}
 	}
 	return nil
@@ -76,9 +76,9 @@ func (t *Table) Init(s *Snmp) error {
 }
 
 func (t *Table) GetField(field string) *Field {
-	for _, f := range t.Fields {
-		if field == f.Name {
-			return &f
+	for idx, _ := range t.Fields {
+		if field == t.Fields[idx].Name {
+			return &t.Fields[idx]
 		}
 	}
 	return nil
@@ -185,7 +185,14 @@ func (t Table) Build(agent string, community string) (*RTable, error) {
 		Rows: make([]RTableRow, 0, len(rows)),
 	}
 	for _, r := range rows {
-		rt.Rows = append(rt.Rows, r)
+		func(r *RTableRow) {
+			for idx, _ := range t.Filters {
+				if !t.Filters[idx].Check(r.Tags[t.Filters[idx].Name]) {
+					return
+				}
+			}
+			rt.Rows = append(rt.Rows, *r)
+		}(&r)
 	}
 	return &rt, nil
 }
@@ -215,6 +222,16 @@ func (f *Filter) Init(t *Table) error {
 		f.Filter.Insert(v, true)
 	}
 	return nil
+}
+
+func (f *Filter) Check(c string) bool {
+	rv := false
+	if f.Prefix {
+		_, _, rv = f.Filter.LongestPrefix(c)
+	} else {
+		_, rv = f.Filter.Get(c)
+	}
+	return rv != f.Exclude
 }
 
 // Field holds the configuration for a Field to look up.
