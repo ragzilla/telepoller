@@ -28,11 +28,6 @@ func main() {
 	if err := toml.Unmarshal(buf, &snmp); err != nil {
 		panic(err)
 	}
-	if err := snmp.Init(); err != nil {
-		panic(err)
-	}
-	//spew.Dump(snmp)
-	return
 
 	wg := &sync.WaitGroup{}
 

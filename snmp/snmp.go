@@ -13,7 +13,6 @@ import (
 	"sync"
 	"time"
 
-	// "github.com/davecgh/go-spew/spew"
 	"github.com/soniah/gosnmp"
 )
 
@@ -38,6 +37,7 @@ func NewSnmp() *Snmp {
 	return &s
 }
 
+/*
 func (s *Snmp) Init() error {
 	// initialize filters
 	for _, t := range s.Tables {
@@ -50,6 +50,7 @@ func (s *Snmp) Init() error {
 	}
 	return nil
 }
+*/
 
 func (s *Snmp) GetTable(table string) *Table {
 	for _, t := range s.Tables {
@@ -197,7 +198,8 @@ type Filter struct {
 	Default bool
 }
 
-func (f Filter) Init(t Table) error {
+/*
+func (f *Filter) Init(t Table) error {
 	field := t.GetField(f.Name)
 	if field != nil {
 		// string type field, check and make sure they supplied an appropriate filter
@@ -222,11 +224,16 @@ func (f Filter) Init(t Table) error {
 	return fmt.Errorf("Bad field %s for table %s", f.Name, t.Name)
 }
 
-func (f Filter) Check(r *RTableRow) bool {
+func (f *Filter) Check(r *RTableRow) bool {
 	// Default = true when we're excluding
 	// Filter  = true when we're inverting that response
+	spew.Dump(r)
+	spew.Dump(f)
+	fmt.Printf("checking filter %v for value %v (%v/%v)\n", f.Filter, r.Tags[f.Name], f.Filter[r.Tags[f.Name]], f.Default)
+	panic("welp")
 	return f.Filter[r.Tags[f.Name]] != f.Default
 }
+*/
 
 // Field holds the configuration for a Field to look up.
 type Field struct {
