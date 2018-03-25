@@ -89,6 +89,9 @@ func (f *TpFramework) Run() error {
 	for {
 		select {
 		case j := <-f.jobs:
+			if len(j.Hosts) == 0 || len(j.Params) == 0 {
+				continue
+			}
 			wg.Add(1)
 			f.poller.NewJob(j, func() {
 				// fire wg.Done() in NewJob callback
