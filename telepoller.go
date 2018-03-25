@@ -28,6 +28,9 @@ func main() {
 	if err := toml.Unmarshal(buf, &snmp); err != nil {
 		panic(err)
 	}
+	if err := snmp.Init(); err != nil {
+		panic(err)
+	}
 
 	wg := &sync.WaitGroup{}
 
@@ -43,7 +46,6 @@ func main() {
 			if err != nil {
 				panic("foo")
 			}
-			// spew.Dump(rt)
 			for _, rtr := range rt.Rows {
 				if len(rtr.Fields) == 0 {
 					continue

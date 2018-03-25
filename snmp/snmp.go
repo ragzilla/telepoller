@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	radix "github.com/armon/go-radix"
 	"github.com/soniah/gosnmp"
 )
 
@@ -37,20 +38,15 @@ func NewSnmp() *Snmp {
 	return &s
 }
 
-/*
 func (s *Snmp) Init() error {
 	// initialize filters
-	for _, t := range s.Tables {
-		for _, f := range t.Filters {
-			err := f.Init(t)
-			if err != nil {
-				return err
-			}
+	for idx, _ := range s.Tables {
+		if err := s.Tables[idx].Init(s); err != nil {
+			return err
 		}
 	}
 	return nil
 }
-*/
 
 func (s *Snmp) GetTable(table string) *Table {
 	for _, t := range s.Tables {
@@ -68,6 +64,15 @@ type Table struct {
 	// Fields is the tags and values to look up.
 	Fields  []Field  `toml:"field"`
 	Filters []Filter `toml:"filter"`
+}
+
+func (t *Table) Init(s *Snmp) error {
+	for idx, _ := range t.Filters {
+		if err := t.Filters[idx].Init(t); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (t *Table) GetField(field string) *Field {
@@ -187,15 +192,29 @@ func (t Table) Build(agent string, community string) (*RTable, error) {
 
 type Filter struct {
 	// the name of the tag to filter on
-	Name string
+	Name string `toml:"name"`
 
 	// tag values to include/exclude
-	Include []string
-	Exclude []string
+	Values []string `toml:"values"`
+
+	// is this a prefix match
+	Prefix bool `toml:"prefix"`
+
+	// are we excluding here?
+	Exclude bool `toml:"exclude"`
 
 	// map, and default value
-	Filter  map[string]bool
-	Default bool
+	Filter *radix.Tree
+}
+
+func (f *Filter) Init(t *Table) error {
+	if f.Filter == nil {
+		f.Filter = radix.New()
+	}
+	for _, v := range f.Values {
+		f.Filter.Insert(v, true)
+	}
+	return nil
 }
 
 /*
