@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	// "github.com/davecgh/go-spew/spew"
 	"github.com/soniah/gosnmp"
 )
 
@@ -198,14 +199,11 @@ type Filter struct {
 
 	IntDefault    bool
 	StringDefault bool
-
-	IsTag bool
 }
 
 func (f Filter) Init(t Table) error {
 	field := t.GetField(f.Name)
 	if field != nil {
-		f.IsTag = field.IsTag
 		if field.Conversion == "int" {
 			// integer type field, check and make sure they supplied an appropriate filter
 			if f.IncludeString != nil || f.ExcludeString != nil {
@@ -214,13 +212,17 @@ func (f Filter) Init(t Table) error {
 				return fmt.Errorf("Can't include AND exclude \"int\", field %s for table %s", f.Name, t.Name)
 			}
 			// map retrieves false when value not present
-			// check function performs && on default and map, set
-			// Include: True (Map)  == Default
-			// Exclude: False (Map) == Default
-			if f.IncludeInt {
+			f.IntFilter = make(map[int]bool)
+			if f.IncludeInt != nil {
 				f.IntDefault = false
-			} else if f.ExcludeInt {
+				for _, k := range f.IncludeInt {
+					f.IntFilter[k] = true
+				}
+			} else if f.ExcludeInt != nil {
 				f.IntDefault = true
+				for _, k := range f.ExcludeInt {
+					f.IntFilter[k] = true
+				}
 			}
 		} else if field.Conversion == "" {
 			// string type field, check and make sure they supplied an appropriate filter
@@ -229,7 +231,19 @@ func (f Filter) Init(t Table) error {
 			} else if f.IncludeString != nil && f.ExcludeString != nil {
 				return fmt.Errorf("Can't include AND exclude \"string\", field %s for table %s", f.Name, t.Name)
 			}
-			fmt.Println("processing Include/Exclude String")
+			// map retrieves false when value not present
+			f.StringFilter = make(map[string]bool)
+			if f.IncludeString != nil {
+				f.StringDefault = false
+				for _, k := range f.IncludeString {
+					f.StringFilter[k] = true
+				}
+			} else if f.ExcludeString != nil {
+				f.StringDefault = true
+				for _, k := range f.ExcludeString {
+					f.StringFilter[k] = true
+				}
+			}
 		} else {
 			// what the crap is going on
 			return fmt.Errorf("Unable to find right conversion, field %s for table %s", f.Name, t.Name)
@@ -240,6 +254,16 @@ func (f Filter) Init(t Table) error {
 }
 
 func (f Filter) Check(r *RTableRow) bool {
+	// xDefault = true when we're excluding
+	// xFilter  = true when we're inverting that response
+	if f.IntFilter != nil {
+		// int filter
+		return f.IntFilter[r.Tags[f.Name]] ^ f.IntDefault
+	} else if f.StringFilter != nil {
+		// string filter
+		return f.StringFilter[r.Tags[f.Name]] ^ f.StringDefault
+	}
+	// default to allow the row
 	return true
 }
 
