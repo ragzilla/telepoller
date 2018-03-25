@@ -1,4 +1,4 @@
-// vim: ts=4:sw=4
+// vim: tabstop=4 softtabstop=4 shiftwidth=4 noexpandtab tw=72
 
 package main
 
@@ -11,7 +11,7 @@ import (
 	// "github.com/davecgh/go-spew/spew"
 	client "github.com/influxdata/influxdb/client/v2"
 	"github.com/influxdata/toml"
-	tsnmp "github.com/ragzilla/telepoller/snmp"
+	tsnmp "github.com/ragzilla/telepoller/telepoller_snmp/snmp"
 )
 
 func main() {

@@ -1,4 +1,4 @@
-// vim: ts=4:sw=4
+// vim: tabstop=4 softtabstop=4 shiftwidth=4 noexpandtab tw=72
 // The contents of this file are Copyright (c) 2015 InfluxDB
 // Reproduced under the terms of The MIT License (MIT)
 
