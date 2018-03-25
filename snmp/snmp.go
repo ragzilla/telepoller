@@ -37,13 +37,26 @@ func NewSnmp() *Snmp {
 	return &s
 }
 
+func (s *Snmp) Init() error {
+	// initialize filters
+	for _, t := range s.Tables {
+		for _, f := range t.Filters {
+			err := f.Init(t)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 func (s *Snmp) GetTable(table string) *Table {
 	for _, t := range s.Tables {
 		if table == t.Name {
 			return &t
 		}
 	}
-	panic(fmt.Sprintf("table %s not found", table))
+	return nil
 }
 
 // Table holds the configuration for a SNMP table.
@@ -51,7 +64,17 @@ type Table struct {
 	// Name will be the name of the measurement.
 	Name string
 	// Fields is the tags and values to look up.
-	Fields []Field `toml:"field"`
+	Fields  []Field  `toml:"field"`
+	Filters []Filter `toml:"filter"`
+}
+
+func (t *Table) GetField(field string) *Field {
+	for _, f := range t.Fields {
+		if field == f.Name {
+			return &f
+		}
+	}
+	return nil
 }
 
 // Build retrieves fields specified in a table and returns an RTable
@@ -158,6 +181,66 @@ func (t Table) Build(agent string, community string) (*RTable, error) {
 		rt.Rows = append(rt.Rows, r)
 	}
 	return &rt, nil
+}
+
+type Filter struct {
+	// the name of the field to filter on
+	Name string
+	// integers to include/exclude
+	IncludeInt []int
+	ExcludeInt []int
+	// strings to include/exclude
+	IncludeString []string
+	ExcludeString []string
+
+	IntFilter    map[int]bool
+	StringFilter map[string]bool
+
+	IntDefault    bool
+	StringDefault bool
+
+	IsTag bool
+}
+
+func (f Filter) Init(t Table) error {
+	field := t.GetField(f.Name)
+	if field != nil {
+		f.IsTag = field.IsTag
+		if field.Conversion == "int" {
+			// integer type field, check and make sure they supplied an appropriate filter
+			if f.IncludeString != nil || f.ExcludeString != nil {
+				return fmt.Errorf("Wrong conversion \"string\", field %s for table %s", f.Name, t.Name)
+			} else if f.IncludeInt != nil && f.ExcludeInt != nil {
+				return fmt.Errorf("Can't include AND exclude \"int\", field %s for table %s", f.Name, t.Name)
+			}
+			// map retrieves false when value not present
+			// check function performs && on default and map, set
+			// Include: True (Map)  == Default
+			// Exclude: False (Map) == Default
+			if f.IncludeInt {
+				f.IntDefault = false
+			} else if f.ExcludeInt {
+				f.IntDefault = true
+			}
+		} else if field.Conversion == "" {
+			// string type field, check and make sure they supplied an appropriate filter
+			if f.IncludeInt != nil || f.ExcludeInt != nil {
+				return fmt.Errorf("Wrong conversion \"int\", field %s for table %s", f.Name, t.Name)
+			} else if f.IncludeString != nil && f.ExcludeString != nil {
+				return fmt.Errorf("Can't include AND exclude \"string\", field %s for table %s", f.Name, t.Name)
+			}
+			fmt.Println("processing Include/Exclude String")
+		} else {
+			// what the crap is going on
+			return fmt.Errorf("Unable to find right conversion, field %s for table %s", f.Name, t.Name)
+		}
+		return nil
+	}
+	return fmt.Errorf("Bad field %s for table %s", f.Name, t.Name)
+}
+
+func (f Filter) Check(r *RTableRow) bool {
+	return true
 }
 
 // Field holds the configuration for a Field to look up.
