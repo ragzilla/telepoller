@@ -6,14 +6,18 @@ package snmp
 
 import (
 	"fmt"
+	"io/ioutil"
 	"math"
 	"net"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	radix "github.com/armon/go-radix"
+	"github.com/davecgh/go-spew/spew"
+	"github.com/influxdata/toml"
 	"github.com/soniah/gosnmp"
 )
 
@@ -38,13 +42,29 @@ func NewSnmp() *Snmp {
 	return &s
 }
 
-func (s *Snmp) Init() error {
+func (s *Snmp) Init(config string) error {
+	// load configuration
+	f, err := os.Open(config)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	buf, err := ioutil.ReadAll(f)
+	if err != nil {
+		return err
+	}
+	if err := toml.Unmarshal(buf, s); err != nil {
+		return err
+	}
+
 	// initialize filters
 	for idx, _ := range s.Tables {
 		if err := s.Tables[idx].Init(s); err != nil {
 			return err
 		}
 	}
+	fmt.Println("initialized snmp!")
+	spew.Dump(s)
 	return nil
 }
 

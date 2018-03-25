@@ -3,6 +3,12 @@
 package main
 
 import (
+	"github.com/ragzilla/telepoller"
+	"github.com/ragzilla/telepoller/telepoller_snmp/snmp"
+)
+
+/*
+import (
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -13,51 +19,57 @@ import (
 	"github.com/influxdata/toml"
 	tsnmp "github.com/ragzilla/telepoller/telepoller_snmp/snmp"
 )
+*/
 
 func main() {
-	f, err := os.Open("telepoller.conf")
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
-	buf, err := ioutil.ReadAll(f)
-	if err != nil {
-		panic(err)
-	}
-	snmp := tsnmp.NewSnmp()
-	if err := toml.Unmarshal(buf, &snmp); err != nil {
-		panic(err)
-	}
-	if err := snmp.Init(); err != nil {
-		panic(err)
-	}
-
-	wg := &sync.WaitGroup{}
-
-	for _, a := range snmp.Agents {
-		wg.Add(1)
-		t := snmp.GetTable("ifMIB")
-		if t == nil {
-			panic(fmt.Sprintf("table %s not found", "ifMIB"))
+	s := snmp.NewSnmp()
+	f := telepoller.NewFramework()
+	f.Init(s)
+	/*
+		f, err := os.Open("telepoller_snmp.conf")
+		if err != nil {
+			panic(err)
 		}
-		go func(t *tsnmp.Table, a string, c string) {
-			defer wg.Done()
-			rt, err := t.Build(a, c)
-			if err != nil {
-				panic("foo")
+		defer f.Close()
+		buf, err := ioutil.ReadAll(f)
+		if err != nil {
+			panic(err)
+		}
+		snmp := tsnmp.NewSnmp()
+		if err := toml.Unmarshal(buf, &snmp); err != nil {
+			panic(err)
+		}
+		if err := snmp.Init(); err != nil {
+			panic(err)
+		}
+
+		wg := &sync.WaitGroup{}
+
+		for _, a := range snmp.Agents {
+			wg.Add(1)
+			t := snmp.GetTable("ifMIB")
+			if t == nil {
+				panic(fmt.Sprintf("table %s not found", "ifMIB"))
 			}
-			for _, rtr := range rt.Rows {
-				if len(rtr.Fields) == 0 {
-					continue
-				}
-				rtr.Tags["agent_host"] = a
-				pt, err := client.NewPoint("ifMIB", rtr.Tags, rtr.Fields, rt.Time)
+			go func(t *tsnmp.Table, a string, c string) {
+				defer wg.Done()
+				rt, err := t.Build(a, c)
 				if err != nil {
-					panic(err)
+					panic("foo")
 				}
-				fmt.Println(pt.String())
-			}
-		}(t, a, snmp.Community)
-	}
-	wg.Wait()
+				for _, rtr := range rt.Rows {
+					if len(rtr.Fields) == 0 {
+						continue
+					}
+					rtr.Tags["agent_host"] = a
+					pt, err := client.NewPoint("ifMIB", rtr.Tags, rtr.Fields, rt.Time)
+					if err != nil {
+						panic(err)
+					}
+					fmt.Println(pt.String())
+				}
+			}(t, a, snmp.Community)
+		}
+		wg.Wait()
+	*/
 }
