@@ -90,7 +90,7 @@
   name = "ifMIB"
   [[table.filter]]
     name = "ifType"
-    values = [ "1", "6", "23", "53", "108", "131", "135", "166" ]
+    values = [ "1", "6", "23", "53", "108", "131", "135" ] #, "166" ] # mpls(166) removed until I can figure out a filter to suffix ifName
   [[table.filter]]
     name = "ifName"
     values = [ "VLAN-" ]
