@@ -105,7 +105,7 @@ func (s *Snmp) NewJob(j *telepoller.TpJob, cb func()) {
 				}
 				rtr.Tags["agent_host"] = a
 				rtr.Tags["hostname"] = hostname
-				pt, err := client.NewPoint("ifMIB", rtr.Tags, rtr.Fields, rt.Time)
+				pt, err := client.NewPoint(j.Params["table"], rtr.Tags, rtr.Fields, rt.Time)
 				if err != nil {
 					fmt.Printf("Error creating point: %v\n", err)
 					continue
