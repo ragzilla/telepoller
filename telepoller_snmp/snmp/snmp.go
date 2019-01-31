@@ -131,8 +131,10 @@ func (s *Snmp) GetTable(table string) *Table {
 
 // Table holds the configuration for a SNMP table.
 type Table struct {
-	// Name will be the name of the measurement.
+	// Name will be the name of the measurement. Also the tag used to initiate requests.
 	Name string
+	// OverrideName will be the name of the measurement if provided.
+	OverrideName string `toml:"overide_name"`
 	// Fields is the tags and values to look up.
 	Fields  []Field  `toml:"field"`
 	Filters []Filter `toml:"filter"`
@@ -154,6 +156,13 @@ func (t *Table) GetField(field string) *Field {
 		}
 	}
 	return nil
+}
+
+func (t *Table) GetName() string {
+	if t.OverrideName != "" {
+		return t.OverrideName
+	}
+	return t.Name
 }
 
 // Build retrieves fields specified in a table and returns an RTable
@@ -257,7 +266,7 @@ func (t Table) Build(agent string, community string) (*RTable, error) {
 	wg.Wait()
 
 	rt := RTable{
-		Name: t.Name,
+		Name: t.GetName(),
 		Time: time.Now(), //TODO record time at start
 		Rows: make([]RTableRow, 0, len(rows)),
 	}
