@@ -134,7 +134,7 @@ type Table struct {
 	// Name will be the name of the measurement. Also the tag used to initiate requests.
 	Name string
 	// OverrideName will be the name of the measurement if provided.
-	OverrideName string `toml:"overide_name"`
+	OverrideName string `toml:"override_name"`
 	// Fields is the tags and values to look up.
 	Fields  []Field  `toml:"field"`
 	Filters []Filter `toml:"filter"`
