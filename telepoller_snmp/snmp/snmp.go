@@ -246,7 +246,6 @@ func (t Table) Build(agent string, community string) (*RTable, error) {
 					rtr.Fields = map[string]interface{}{}
 					rows[idx] = rtr
 				}
-				rl.Unlock()
 				// don't add an empty string
 				if vs, ok := v.(string); !ok || vs != "" {
 					if f.IsTag {
@@ -259,6 +258,7 @@ func (t Table) Build(agent string, community string) (*RTable, error) {
 						rtr.Fields[f.Name] = v
 					}
 				}
+				rl.Unlock()
 			}
 			return nil
 		}(f, agent, community)
